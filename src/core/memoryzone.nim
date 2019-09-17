@@ -9,7 +9,10 @@ type
 proc loadFile*(this: var MemoryZone, filepath: string, size: int) =
   this.data = newSeq[uint8](size)
   let f = newFileStream(filepath, fmRead)
-  assert f.readData(addr(this.data), size) == size
+  if isNil(f):
+     raise new(Exception)
+
+  assert f.readData(addr(this.data[0]), size) == size
 
 proc load32(this: MemoryZone, offset: uint32): uint32 =
   let b0 = this.data[offset + 0].uint32
