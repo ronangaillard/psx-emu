@@ -1,10 +1,12 @@
 import streams
 
+const BIOS_START_ADDR* = 0xbfc00000.uint32
 const BIOS_SIZE* = 512 * 1024
 
 type
   MemoryZone* = ref object
     data: seq[uint8]
+    startAddr: uint32
 
 proc loadFile*(this: var MemoryZone, filepath: string, size: int) =
   this.data = newSeq[uint8](size)
@@ -14,7 +16,13 @@ proc loadFile*(this: var MemoryZone, filepath: string, size: int) =
 
   assert f.readData(addr(this.data[0]), size) == size
 
-proc load32(this: MemoryZone, offset: uint32): uint32 =
+proc setStartAddr*(this: var MemoryZone, startAddr: uint32) =
+  this.startAddr = startAddr
+
+proc provides*(this: MemoryZone, address: uint32): bool =
+  return address >= this.startAddr and address < this.startAddr + this.data.len.uint32
+
+proc load32*(this: MemoryZone, offset: uint32): uint32 =
   let b0 = this.data[offset + 0].uint32
   let b1 = this.data[offset + 1].uint32
   let b2 = this.data[offset + 2].uint32

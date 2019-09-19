@@ -11,10 +11,10 @@ type
 proc init*(this: var System) =
   this.psxBios = new(MemoryZone)
   this.psxBios.loadFile("./assets/SCPH1001.BIN", BIOS_SIZE)
+  this.psxBios.setStartAddr(BIOS_START_ADDR)
   echo("Bios loaded")
 
   this.psxInterconnect = Interconnect()
   this.psxInterconnect.addZone(this.psxBios)
-
   echo("System ready")
 
