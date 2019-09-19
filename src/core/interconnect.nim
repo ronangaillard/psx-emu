@@ -17,3 +17,9 @@ proc load32*(this: Interconnect, address: uint32): uint32 =
 
   raise newException(UnallocatedAddress, fmt"Address {address} is unallocated")
 
+proc store32*(this: Interconnect, address: uint32, value:uint32) =
+  for mz in this.memoryZones:
+    if mz.provides(address):
+      mz.store32(address, value)
+
+  raise newException(UnallocatedAddress, fmt"Address {address} is unallocated") 

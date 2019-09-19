@@ -35,3 +35,11 @@ proc load32*(this: MemoryZone, address: uint32): uint32 =
   let b3 = this.data[offset + 3].uint32
 
   return b0 or ( b1 shl 8 ) or ( b2 shl 16 ) or (b3 shl 24)
+
+proc store32*(this: MemoryZone, address: uint32, value: uint32) =
+  let offset = address - this.startAddr
+
+  this.data[offset + 0] = (value and 0xff).uint8
+  this.data[offset + 1] = (value shr 8 and 0xff).uint8
+  this.data[offset + 2] = (value shr 16 and 0xff).uint8
+  this.data[offset + 3] = (value shr 32 and 0xff).uint8
