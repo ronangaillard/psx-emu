@@ -1,5 +1,6 @@
 import strformat
 import interconnect
+import logging
 
 type
   Cpu* = object
@@ -28,15 +29,15 @@ proc init*(this: var Cpu) =
   this.pc = 0xbfc00000.uint32 # boot adress
 
 proc printState*(this: Cpu) = 
-  echo("CPU State:")
-  echo(fmt"pc = {this.pc}")
+  info("CPU State:")
+  info(fmt"pc = {this.pc}")
 
 proc load32(this: Cpu, address: uint32): uint32 =
   return 0
 
 proc decodeAndExecute(this: Cpu, instruction: uint32) =
   let opcode: uint8 = ((instruction shl 26) and 0x3f).uint8
-  echo(fmt"opcode is {opcode}")
+  info(fmt"opcode is {opcode}")
 
 proc runNextInstr(this: var Cpu) =
   let pc: uint32 = this.pc

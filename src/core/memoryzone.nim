@@ -1,4 +1,6 @@
 import streams
+import logging
+import strformat
 
 const BIOS_START_ADDR* = 0xbfc00000.uint32
 const BIOS_SIZE* = 512 * 1024
@@ -15,6 +17,8 @@ proc loadFile*(this: var MemoryZone, filepath: string, size: int) =
      raise new(Exception)
 
   assert f.readData(addr(this.data[0]), size) == size
+
+  info(fmt"Loaded {size} bytes of file {filepath}")
 
 proc setStartAddr*(this: var MemoryZone, startAddr: uint32) =
   this.startAddr = startAddr

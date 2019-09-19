@@ -1,7 +1,10 @@
+import logging
 import core/system
 
+var consoleLog = newConsoleLogger(fmtStr="[$time] - $levelname: ")
+addHandler(consoleLog)
 
-echo("Welcome to the nim psx emulator")
+info("Welcome to the nim psx emulator")
 
 var psx = System()
 psx.init()
