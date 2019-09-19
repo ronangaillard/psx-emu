@@ -2,6 +2,8 @@ import strformat
 import interconnect
 import logging
 
+type UnknownOpcode = Exception
+
 type
   Cpu* = object
     interco: Interconnect
@@ -25,25 +27,23 @@ type
     entryhi: uint32
     entrylo: uint32
 
-proc init*(this: var Cpu) =
+proc init*(this: var Cpu, interco: Interconnect) =
+  this.interco = interco
   this.pc = 0xbfc00000.uint32 # boot adress
 
 proc printState*(this: Cpu) = 
   info("CPU State:")
   info(fmt"pc = {this.pc}")
 
-proc load32(this: Cpu, address: uint32): uint32 =
-  return 0
-
 proc decodeAndExecute(this: Cpu, instruction: uint32) =
+  info(fmt"Intruction in {instruction:#x}")
   let opcode: uint8 = ((instruction shl 26) and 0x3f).uint8
-  info(fmt"opcode is {opcode}")
+  raise newException(UnknownOpcode, fmt"Opcode {opcode} not supported")
 
-proc runNextInstr(this: var Cpu) =
-  let pc: uint32 = this.pc
-  let instruction: uint32 = this.load32(pc)
+proc runNextInstr*(this: var Cpu) =
+  let instruction: uint32 = this.interco.load32(this.pc)
 
-  this.pc = pc + 4
+  this.pc = this.pc + 4
 
   this.decodeAndExecute(instruction)
 

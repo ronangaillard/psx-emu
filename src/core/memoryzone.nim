@@ -26,7 +26,9 @@ proc setStartAddr*(this: var MemoryZone, startAddr: uint32) =
 proc provides*(this: MemoryZone, address: uint32): bool =
   return address >= this.startAddr and address < this.startAddr + this.data.len.uint32
 
-proc load32*(this: MemoryZone, offset: uint32): uint32 =
+proc load32*(this: MemoryZone, address: uint32): uint32 =
+  let offset = address - this.startAddr
+
   let b0 = this.data[offset + 0].uint32
   let b1 = this.data[offset + 1].uint32
   let b2 = this.data[offset + 2].uint32

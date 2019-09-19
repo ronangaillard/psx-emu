@@ -8,3 +8,4 @@ info("Welcome to the nim psx emulator")
 
 var psx = System()
 psx.init()
+psx.run()

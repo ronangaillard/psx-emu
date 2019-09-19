@@ -19,3 +19,8 @@ proc init*(this: var System) =
   this.psxInterconnect.addZone(this.psxBios)
   info("System ready")
 
+  this.psxCpu.init(this.psxInterconnect)
+
+proc run*(this: var System) =
+  while true:
+    this.psxCpu.runNextInstr()
