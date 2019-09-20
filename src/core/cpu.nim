@@ -2,6 +2,7 @@ import strformat
 import interconnect
 import logging
 import opcodes
+import tables
 
 type UnknownOpcode = Exception
 type UnknownRegister = Exception
@@ -41,6 +42,8 @@ type
     entryhi: uint32
     entrylo: uint32
 
+    instructionsTable: Table[int, proc(this: var Cpu, instruction: uint32) {.nimcall.}]
+
 proc setReg(this: var Cpu, regIndex: uint8, value: uint32) =
   if regIndex >= 32.uint32:
     raise newException(UnknownRegister, fmt"Register {regIndex} does not exist, but trying to write to it")
@@ -50,13 +53,6 @@ proc setReg(this: var Cpu, regIndex: uint8, value: uint32) =
     return
 
   this.regs[regIndex] = value
-
-proc init*(this: var Cpu, interco: Interconnect) =
-  this.interco = interco
-  this.pc = 0xbfc00000.uint32 # boot adress
-
-  for i in 1 .. <32:
-    this.setReg(i.uint8, 0xdeadbeef.uint32)
 
 proc printState*(this: Cpu) = 
   var cpuState = "CPU State:\n"
@@ -88,17 +84,30 @@ proc instrSw(this: var Cpu, instruction: uint32) =
   this.interco.store32(address, v)
 # End of instruction
 
+proc init*(this: var Cpu, interco: Interconnect) =
+  this.interco = interco
+  this.pc = 0xbfc00000.uint32 # boot adress
+
+  # Fill regs with garbage data
+  for i in 1 .. <32:
+    this.setReg(i.uint8, 0xdeadbeef.uint32)
+
+  # Set instruction table
+  # Maybe we should set this as const or move its declaration elsewhere
+  this.instructionsTable = {
+    OPCODE_LUI: instrLui,
+    OPCODE_ORI: instrOri,
+    OPCODE_SW: instrSw
+  }.toTable
+
 proc decodeAndExecute(this: var Cpu, instruction: uint32) =
-  case instruction.op:
-    of OPCODE_LUI:
-      this.instrLui(instruction)
-    of OPCODE_ORI:
-      this.instrOri(instruction)
-    of OPCODE_SW:
-      this.instrSw(instruction)
-    else:
-      this.printState()
-      raise newException(UnknownOpcode, fmt"Opcode {instruction.op:#b} not supported")
+  let opcode = instruction.op.int
+
+  if not this.instructionsTable.contains(opcode):
+    this.printState()
+    raise newException(UnknownOpcode, fmt"Opcode {instruction.op:#b} not supported")
+
+  this.instructionsTable[opcode](this, instruction)
 
 proc runNextInstr*(this: var Cpu) =
   let instruction: uint32 = this.interco.load32(this.pc)
