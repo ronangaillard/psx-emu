@@ -6,9 +6,14 @@ const BIOS_START_ADDR* = 0xbfc00000.uint32
 const BIOS_SIZE* = 512 * 1024
 
 type
+  MemoryAccessMode* = enum
+    readOnly, readWrite, noChange
+
   MemoryZone* = ref object
     data: seq[uint8]
     startAddr: uint32
+
+    mode: MemoryAccessMode
 
 proc loadFile*(this: var MemoryZone, filepath: string, size: int) =
   this.data = newSeq[uint8](size)
@@ -20,6 +25,16 @@ proc loadFile*(this: var MemoryZone, filepath: string, size: int) =
 
   info(fmt"Loaded {size} bytes of file {filepath}")
 
+proc fromMemory32*(this: var MemoryZone, data: openArray[uint32]) =
+  for data32 in data:
+    this.data.add((data32 and 0xff).uint8)
+    this.data.add((data32 shr 8 and 0xff).uint8)
+    this.data.add((data32 shr 16 and 0xff).uint8)
+    this.data.add((data32 shr 24 and 0xff).uint8)
+
+proc setMode*(this: var MemoryZone, newMode: MemoryAccessMode) =
+  this.mode = newMode
+  
 proc setStartAddr*(this: var MemoryZone, startAddr: uint32) =
   this.startAddr = startAddr
 
@@ -37,9 +52,14 @@ proc load32*(this: MemoryZone, address: uint32): uint32 =
   return b0 or ( b1 shl 8 ) or ( b2 shl 16 ) or (b3 shl 24)
 
 proc store32*(this: MemoryZone, address: uint32, value: uint32) =
+  if this.mode == MemoryAccessMode.readOnly:
+    raise newException(Exception, "Trying to write to read only memory")
+  if this.mode == MemoryAccessMode.noChange and this.load32(address) != value:
+    raise newException(Exception, "Trying to change value to \"no change\" memory")
+    
   let offset = address - this.startAddr
 
   this.data[offset + 0] = (value and 0xff).uint8
   this.data[offset + 1] = (value shr 8 and 0xff).uint8
   this.data[offset + 2] = (value shr 16 and 0xff).uint8
-  this.data[offset + 3] = (value shr 32 and 0xff).uint8
+  this.data[offset + 3] = (value shr 24 and 0xff).uint8

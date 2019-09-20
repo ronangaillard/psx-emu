@@ -1,6 +1,11 @@
 import memoryzone
 import strformat
 
+const LTQ_MC_DDR_BASE_1*: uint32 = 0x1f801000
+const LTQ_MC_DDR_BASE_1_VALUE*: uint32 = 0x1f000000
+const LTQ_MC_DDR_BASE_2*: uint32 = 0x1f801000
+const LTQ_MC_DDR_BASE_2_VALUE*: uint32 = 0x1f802000
+
 type 
   UnallocatedAddress = Exception
   UnalignedMemoryAccess = Exception
