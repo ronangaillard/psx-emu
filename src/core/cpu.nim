@@ -3,6 +3,7 @@ import interconnect
 import logging
 import opcodes
 import tables
+import memoryzone
 
 type UnknownOpcode = Exception
 type UnknownRegister = Exception
@@ -42,18 +43,7 @@ type
     regs: array[32, uint32]
 
     # Coprocessor registers
-    badvaddr: uint32
-    status: uint32
-    cause: uint32
-    epc: uint32
-
-    # Virtual memory registers
-    tlb: uint32
-    index: uint32
-    random: uint32
-    context: uint32
-    entryhi: uint32
-    entrylo: uint32
+    sr: uint32
 
     instructionsTable: Table[int, proc(this: var Cpu, instruction: uint32) {.nimcall.}]
 
@@ -91,6 +81,10 @@ proc instrOri(this: var Cpu, instruction: uint32) =
   this.setReg(regIndex, v)
 
 proc instrSw(this: var Cpu, instruction: uint32) =
+  if (this.sr and 0x10000) != 0:
+    notice("Ignoring store when cache is isolated")
+    return
+
   let i = instruction.immSe
   let t = instruction.t
   let s = instruction.s
@@ -110,7 +104,7 @@ proc instrSll(this: var Cpu, instruction: uint32) =
   this.setReg(d, v)
 
 proc instrZero(this: var Cpu, instruction: uint32) =
-  info(fmt"Decoding sub {instruction:#b} @{this.pc:#x}")
+  info(fmt"Decoding sub {instruction:#b}")
   let subFunction = instruction.subfunction.int
 
   if not this.subInstructionsTable.contains(subfunction):
@@ -138,12 +132,26 @@ proc instrOr(this: var Cpu, instruction: uint32) =
   let v = this.regs[s] or this.regs[t]
 
   this.setReg(d, v)
+
+proc instrCop0(this: var Cpu, instruction: uint32) =
+  let cpu_r = instruction.t
+  let cop_r = instruction.d
+
+  let v = this.regs[cpu_r]
+
+  case cop_r:
+    of 12:
+      this.sr = v
+    else:
+      raise newException(Exception, "Unknown coprocessor register")
+
 # End of instruction
 
 proc init*(this: var Cpu, interco: Interconnect) =
   this.interco = interco
-  this.pc = 0xbfc00000.uint32 # boot adress
+  this.pc = BIOS_START_ADDR # boot adress
   this.nextInstruction = 0x00.uint32
+  this.sr = 0
 
   # Fill regs with garbage data
   for i in 1 .. <32:
@@ -157,7 +165,8 @@ proc init*(this: var Cpu, interco: Interconnect) =
     OPCODE_SW: instrSw,
     OPCODE_ZERO: instrZero,
     OPCODE_ADDIU: instrAddiu,
-    OPCODE_J: instrJ
+    OPCODE_J: instrJ,
+    OPCODE_COP0: instrCop0
   }.toTable
 
   this.subInstructionsTable = {
@@ -166,7 +175,7 @@ proc init*(this: var Cpu, interco: Interconnect) =
    }.toTable
 
 proc decodeAndExecute(this: var Cpu, instruction: uint32) =
-  info(fmt"Decoding {instruction:#b} @{this.pc:#x}")
+  info(fmt"Decoding {instruction:#b} @{this.pc - 2 * WORD_SIZE:#x}")
   let opcode = instruction.op.int
 
   if not this.instructionsTable.contains(opcode):
@@ -179,7 +188,7 @@ proc runNextInstr*(this: var Cpu) =
   
   this.nextInstruction = this.interco.load32(this.pc)
 
-  this.pc = this.pc + 4
+  this.pc = this.pc + WORD_SIZE
 
   this.decodeAndExecute(instruction)
 
