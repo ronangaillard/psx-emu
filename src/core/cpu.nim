@@ -21,7 +21,9 @@ proc h(instruction: uint32): uint8 = ((instruction shr 6) and 0x1f).uint8
 ## Get subfunction (bit [5:0]
 proc subfunction(instruction: uint32): uint8 = (instruction and 0x1f).uint8
 ## Get immediate value
-proc imm(instruction: uint32) :uint16 = (instruction and 0xffff).uint16
+proc imm(instruction: uint32): uint16 = (instruction and 0xffff).uint16
+## Get immediate value signed extended
+proc immSe(instruction: uint32): uint32 = ((instruction and 0xffff).int16).uint32
 
 type
   Cpu* = object
@@ -80,7 +82,7 @@ proc instrOri(this: var Cpu, instruction: uint32) =
   this.setReg(regIndex, v)
 
 proc instrSw(this: var Cpu, instruction: uint32) =
-  let i = instruction.imm
+  let i = instruction.immSe
   let t = instruction.t
   let s = instruction.s
 
@@ -126,6 +128,7 @@ proc init*(this: var Cpu, interco: Interconnect) =
   }.toTable
 
 proc decodeAndExecute(this: var Cpu, instruction: uint32) =
+  info(fmt"Decoding {instruction:#b}")
   let opcode = instruction.op.int
 
   if not this.instructionsTable.contains(opcode):
