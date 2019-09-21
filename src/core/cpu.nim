@@ -72,7 +72,7 @@ proc printState*(this: Cpu) =
 
 # Instructions
 proc instrLui(this: var Cpu, instruction: uint32) =
-  let v = instruction.imm shl 16
+  let v = instruction.imm.uint32 shl 16
   this.setReg(instruction.t, v)
 
 proc instrOri(this: var Cpu, instruction: uint32) =
@@ -104,7 +104,6 @@ proc instrZero(this: var Cpu, instruction: uint32) =
   if instruction.subfunction == SUBFUNCTION_SLL:
     this.instrSll(instruction)
   else:
-    this.printState()
     raise newException(UnknownOpcode, fmt"Opcode {instruction.op:#b} not supported")
 
 proc instrAddiu(this: var Cpu, instruction: uint32) =
@@ -141,7 +140,6 @@ proc decodeAndExecute(this: var Cpu, instruction: uint32) =
   let opcode = instruction.op.int
 
   if not this.instructionsTable.contains(opcode):
-    this.printState()
     raise newException(UnknownOpcode, fmt"Opcode {instruction.op:#b} not supported")
 
   this.instructionsTable[opcode](this, instruction)

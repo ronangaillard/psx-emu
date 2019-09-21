@@ -32,6 +32,9 @@ proc fromMemory32*(this: var MemoryZone, data: openArray[uint32]) =
     this.data.add((data32 shr 16 and 0xff).uint8)
     this.data.add((data32 shr 24 and 0xff).uint8)
 
+proc initEmpty*(this: var MemoryZone, size: uint32) =
+  this.data = newSeq[uint8](size)
+
 proc setMode*(this: var MemoryZone, newMode: MemoryAccessMode) =
   this.mode = newMode
   
@@ -63,3 +66,6 @@ proc store32*(this: MemoryZone, address: uint32, value: uint32) =
   this.data[offset + 1] = (value shr 8 and 0xff).uint8
   this.data[offset + 2] = (value shr 16 and 0xff).uint8
   this.data[offset + 3] = (value shr 24 and 0xff).uint8
+
+proc printState*(this: MemoryZone) =
+  info(fmt"MemoryZone [{this.startAddr:#x}, {(this.startAddr + this.data.len.uint32):#x}] mode : {this.mode}")
