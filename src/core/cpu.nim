@@ -159,6 +159,18 @@ proc instrBne(this: var Cpu, instruction: uint32) =
   if this.regs[s] != this.regs[t]:
     this.branch(i)
 
+proc instrAdd(this: var Cpu, instruction: uint32) =
+  let i = instruction.immSe
+  let t = instruction.t
+  let s = this.regs[instruction.s]
+  var v: uint32
+
+  try:
+    v = s + i
+  except:
+    raise newException(Exception, "Overflow in ADD")
+
+  this.setReg(t, v)
 # End of instruction
 
 proc init*(this: var Cpu, interco: Interconnect) =
