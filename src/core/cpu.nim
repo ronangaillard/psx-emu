@@ -26,7 +26,7 @@ proc imm(instruction: uint32): uint16 = (instruction and 0xffff).uint16
 ## Get immediate value signed extended
 proc immSe(instruction: uint32): uint32 = 
   result = (instruction and 0xffff).uint32
-  if (result and 0x8000).bool:
+  if (result and 0x8000) == 0x8000:
     result = result or 0xffff0000.uint32
 ## Get immediate value for jump
 proc immJump(instruction: uint32): uint32 = (instruction and 0x3ffffff).uint32
@@ -68,6 +68,12 @@ proc printState*(this: Cpu) =
     cpuState &= fmt"reg[{i}] = {this.regs[i]:#x}" & "\n"
 
   info(cpuState)
+
+proc branch(this: var Cpu, offset: uint32) =
+  # Offset is shifted left to get aligned addresses
+  let offset = offset shl 2
+
+  this.pc = this.pc + offset - WORD_SIZE
 
 # Instructions
 proc instrLui(this: var Cpu, instruction: uint32) =
@@ -145,6 +151,14 @@ proc instrCop0(this: var Cpu, instruction: uint32) =
     else:
       raise newException(Exception, "Unknown coprocessor register")
 
+proc instrBne(this: var Cpu, instruction: uint32) =
+  let i = instruction.immSe
+  let s = instruction.s
+  let t = instruction.t
+
+  if this.regs[s] != this.regs[t]:
+    this.branch(i)
+
 # End of instruction
 
 proc init*(this: var Cpu, interco: Interconnect) =
@@ -166,7 +180,8 @@ proc init*(this: var Cpu, interco: Interconnect) =
     OPCODE_ZERO: instrZero,
     OPCODE_ADDIU: instrAddiu,
     OPCODE_J: instrJ,
-    OPCODE_COP0: instrCop0
+    OPCODE_COP0: instrCop0,
+    OPCODE_BNE: instrBne
   }.toTable
 
   this.subInstructionsTable = {
