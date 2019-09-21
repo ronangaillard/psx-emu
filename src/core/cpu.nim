@@ -56,6 +56,9 @@ type
     entrylo: uint32
 
     instructionsTable: Table[int, proc(this: var Cpu, instruction: uint32) {.nimcall.}]
+
+    # This is used for instructions with opcode = 0
+    subInstructionsTable: Table[int, proc(this: var Cpu, instruction: uint32) {.nimcall.}]
     nextInstruction: uint32
 
 proc setReg(this: var Cpu, regIndex: uint8, value: uint32) =
@@ -107,10 +110,13 @@ proc instrSll(this: var Cpu, instruction: uint32) =
   this.setReg(d, v)
 
 proc instrZero(this: var Cpu, instruction: uint32) =
-  if instruction.subfunction == SUBFUNCTION_SLL:
-    this.instrSll(instruction)
-  else:
-    raise newException(UnknownOpcode, fmt"Opcode {instruction.op:#b} not supported")
+  info(fmt"Decoding sub {instruction:#b} @{this.pc:#x}")
+  let subFunction = instruction.subfunction.int
+
+  if not this.subInstructionsTable.contains(subfunction):
+    raise newException(UnknownOpcode, fmt"Subfunction {instruction.subfunction:#b} not supported")
+
+  this.subInstructionsTable[subFunction](this, instruction)
 
 proc instrAddiu(this: var Cpu, instruction: uint32) =
   let i = instruction.immSe
@@ -124,6 +130,14 @@ proc instrAddiu(this: var Cpu, instruction: uint32) =
 proc instrJ(this: var Cpu, instruction: uint32) =
   let i = instruction.immJump
   this.pc = (this.pc and 0xf0000000.uint32) or (i shl 2)
+
+proc instrOr(this: var Cpu, instruction: uint32) =
+  let d = instruction.d
+  let s = instruction.s
+  let t = instruction.t
+  let v = this.regs[s] or this.regs[t]
+
+  this.setReg(d, v)
 # End of instruction
 
 proc init*(this: var Cpu, interco: Interconnect) =
@@ -145,6 +159,11 @@ proc init*(this: var Cpu, interco: Interconnect) =
     OPCODE_ADDIU: instrAddiu,
     OPCODE_J: instrJ
   }.toTable
+
+  this.subInstructionsTable = {
+    SUBFUNCTION_SLL: instrSll,
+    SUBFUNCTION_OR: instrOr
+   }.toTable
 
 proc decodeAndExecute(this: var Cpu, instruction: uint32) =
   info(fmt"Decoding {instruction:#b} @{this.pc:#x}")
