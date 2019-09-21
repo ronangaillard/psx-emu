@@ -73,7 +73,7 @@ proc branch(this: var Cpu, offset: uint32) =
   # Offset is shifted left to get aligned addresses
   let offset = offset shl 2
 
-  this.pc = this.pc + offset - WORD_SIZE
+  this.pc = this.pc + offset
 
 # Instructions
 proc instrLui(this: var Cpu, instruction: uint32) =
