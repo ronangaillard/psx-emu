@@ -147,7 +147,7 @@ proc init*(this: var Cpu, interco: Interconnect) =
   }.toTable
 
 proc decodeAndExecute(this: var Cpu, instruction: uint32) =
-  info(fmt"Decoding {instruction:#b}")
+  info(fmt"Decoding {instruction:#b} @{this.pc:#x}")
   let opcode = instruction.op.int
 
   if not this.instructionsTable.contains(opcode):
