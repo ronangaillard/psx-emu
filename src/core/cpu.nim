@@ -56,6 +56,7 @@ type
     entrylo: uint32
 
     instructionsTable: Table[int, proc(this: var Cpu, instruction: uint32) {.nimcall.}]
+    nextInstruction: uint32
 
 proc setReg(this: var Cpu, regIndex: uint8, value: uint32) =
   if regIndex >= 32.uint32:
@@ -128,6 +129,7 @@ proc instrJ(this: var Cpu, instruction: uint32) =
 proc init*(this: var Cpu, interco: Interconnect) =
   this.interco = interco
   this.pc = 0xbfc00000.uint32 # boot adress
+  this.nextInstruction = 0x00.uint32
 
   # Fill regs with garbage data
   for i in 1 .. <32:
@@ -154,7 +156,9 @@ proc decodeAndExecute(this: var Cpu, instruction: uint32) =
   this.instructionsTable[opcode](this, instruction)
 
 proc runNextInstr*(this: var Cpu) =
-  let instruction: uint32 = this.interco.load32(this.pc)
+  let instruction: uint32 = this.nextInstruction
+  
+  this.nextInstruction = this.interco.load32(this.pc)
 
   this.pc = this.pc + 4
 
