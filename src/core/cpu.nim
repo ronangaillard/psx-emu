@@ -14,6 +14,12 @@ proc op(instruction: uint32): uint8 = (instruction shr 26).uint8
 proc t(instruction: uint32): uint8 = ((instruction shr 16) and 0x1f).uint8
 ## Get s
 proc s(instruction: uint32): uint8 = ((instruction shr 21) and 0x1f).uint8
+## Get d
+proc d(instruction: uint32): uint8 = ((instruction shr 11) and 0x1f).uint8
+## Get h
+proc h(instruction: uint32): uint8 = ((instruction shr 6) and 0x1f).uint8
+## Get subfunction (bit [5:0]
+proc subfunction(instruction: uint32): uint8 = (instruction and 0x1f).uint8
 ## Get immediate value
 proc imm(instruction: uint32) :uint16 = (instruction and 0xffff).uint16
 
@@ -82,6 +88,24 @@ proc instrSw(this: var Cpu, instruction: uint32) =
   let v = this.regs[t]
 
   this.interco.store32(address, v)
+
+proc instrSll(this: var Cpu, instruction: uint32) =
+  let h = instruction.h
+  let t = instruction.t
+  let d = instruction.d
+
+  let v = this.regs[t] shl h
+
+  this.setReg(d, v)
+
+proc instrZero(this: var Cpu, instruction: uint32) =
+  if instruction.subfunction == SUBFUNCTION_SLL:
+    this.instrSll(instruction)
+  else:
+    this.printState()
+    raise newException(UnknownOpcode, fmt"Opcode {instruction.op:#b} not supported")
+    
+
 # End of instruction
 
 proc init*(this: var Cpu, interco: Interconnect) =
@@ -97,7 +121,8 @@ proc init*(this: var Cpu, interco: Interconnect) =
   this.instructionsTable = {
     OPCODE_LUI: instrLui,
     OPCODE_ORI: instrOri,
-    OPCODE_SW: instrSw
+    OPCODE_SW: instrSw,
+    OPCODE_ZERO: instrZero
   }.toTable
 
 proc decodeAndExecute(this: var Cpu, instruction: uint32) =
