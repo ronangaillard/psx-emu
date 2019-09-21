@@ -73,7 +73,7 @@ proc setReg(this: var Cpu, regIndex: uint8, value: uint32) =
 
 proc printState*(this: Cpu) = 
   var cpuState = "CPU State:\n"
-  cpuState &= fmt"pc = {this.pc}" & "\n"
+  cpuState &= fmt"pc = {this.pc:#x}" & "\n"
   for i in 0 .. <32:
     cpuState &= fmt"reg[{i}] = {this.regs[i]:#x}" & "\n"
 
