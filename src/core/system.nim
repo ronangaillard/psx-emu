@@ -30,11 +30,17 @@ proc init*(this: var System) =
   ramSizeRegister.setStartAddr(RAM_SIZE_REG_ADDR)
   ramSizeRegister.setMode(readWrite)
 
+  var cacheControl = new(MemoryZone)
+  cacheControl.initEmpty(WORD_SIZE)
+  cacheControl.setStartAddr(CACHE_CONTROL_ADDR)
+  cacheControl.setMode(readWrite)
+
   this.psxInterconnect = Interconnect()
   this.psxInterconnect.addZone(psxBios)
   this.psxInterconnect.addZone(memoryControl1)
   this.psxInterconnect.addZone(memoryControl2)
   this.psxInterconnect.addZone(ramSizeRegister)
+  this.psxInterconnect.addZone(cacheControl)
   info("System ready")
 
   this.psxCpu.init(this.psxInterconnect)
