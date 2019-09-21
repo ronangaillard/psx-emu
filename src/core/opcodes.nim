@@ -2,5 +2,6 @@ const OPCODE_LUI* = 0b001111
 const OPCODE_ORI* = 0b001101
 const OPCODE_SW*  = 0b101011 # Store Word
 const OPCODE_ZERO* = 0b000000
+const OPCODE_ADDIU* = 0b001001
 
 const SUBFUNCTION_SLL* = 0b00000

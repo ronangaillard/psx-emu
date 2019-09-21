@@ -106,7 +106,15 @@ proc instrZero(this: var Cpu, instruction: uint32) =
   else:
     this.printState()
     raise newException(UnknownOpcode, fmt"Opcode {instruction.op:#b} not supported")
-    
+
+proc instrAddiu(this: var Cpu, instruction: uint32) =
+  let i = instruction.immSe
+  let t = instruction.t
+  let s = instruction.s
+
+  let v = this.regs[s] + i
+
+  this.setReg(t, v)
 
 # End of instruction
 
@@ -124,7 +132,8 @@ proc init*(this: var Cpu, interco: Interconnect) =
     OPCODE_LUI: instrLui,
     OPCODE_ORI: instrOri,
     OPCODE_SW: instrSw,
-    OPCODE_ZERO: instrZero
+    OPCODE_ZERO: instrZero,
+    OPCODE_ADDIU: instrAddiu
   }.toTable
 
 proc decodeAndExecute(this: var Cpu, instruction: uint32) =
