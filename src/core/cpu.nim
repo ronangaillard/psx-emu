@@ -23,7 +23,12 @@ proc subfunction(instruction: uint32): uint8 = (instruction and 0x1f).uint8
 ## Get immediate value
 proc imm(instruction: uint32): uint16 = (instruction and 0xffff).uint16
 ## Get immediate value signed extended
-proc immSe(instruction: uint32): uint32 = ((instruction and 0xffff).int16).uint32
+proc immSe(instruction: uint32): uint32 = 
+  result = (instruction and 0xffff).uint32
+  if (result and 0x8000).bool:
+    result = result or 0xffff0000.uint32
+## Get immediate value for jump
+proc immJump(instruction: uint32): uint32 = (instruction and 0x3ffffff).uint32
 
 type
   Cpu* = object
@@ -115,6 +120,9 @@ proc instrAddiu(this: var Cpu, instruction: uint32) =
 
   this.setReg(t, v)
 
+proc instrJ(this: var Cpu, instruction: uint32) =
+  let i = instruction.immJump
+  this.pc = (this.pc and 0xf0000000.uint32) or (i shl 2)
 # End of instruction
 
 proc init*(this: var Cpu, interco: Interconnect) =
@@ -132,7 +140,8 @@ proc init*(this: var Cpu, interco: Interconnect) =
     OPCODE_ORI: instrOri,
     OPCODE_SW: instrSw,
     OPCODE_ZERO: instrZero,
-    OPCODE_ADDIU: instrAddiu
+    OPCODE_ADDIU: instrAddiu,
+    OPCODE_J: instrJ
   }.toTable
 
 proc decodeAndExecute(this: var Cpu, instruction: uint32) =
