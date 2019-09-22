@@ -58,6 +58,11 @@ proc init*(this: var System) =
   expansion2.setStartAddr(EXPANSION2_ADDRESS)
   expansion2.setMode(readWrite)
 
+  var interruptRegisters = new(MemoryZone)
+  interruptRegisters.initEmpty(INTERRUPT_REGISTER_SIZE)
+  interruptRegisters.setStartAddr(INTERRUPT_REGISTER_ADDRESS)
+  interruptRegisters.setMode(readWrite)
+
   this.psxInterconnect = Interconnect()
   this.psxInterconnect.addZone(psxBios)
   this.psxInterconnect.addZone(memoryControl1)
@@ -68,6 +73,7 @@ proc init*(this: var System) =
   this.psxInterconnect.addZone(spu)
   this.psxInterconnect.addZone(expansion1)
   this.psxInterconnect.addZone(expansion2)
+  this.psxInterconnect.addZone(interruptRegisters)
   info("System ready")
 
   this.psxCpu.init(this.psxInterconnect)
