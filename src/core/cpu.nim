@@ -154,19 +154,36 @@ proc instrCop0(this: var Cpu, instruction: uint32) =
   let cpu_r = instruction.t
   let cop_r = instruction.d
 
-  let v = this.regs[cpu_r]
+  case instruction.s:
+    of 0b00000: # MFC0 (load from cop0 reg)
+      var v:uint32
 
-  case cop_r:
-    of 12:
-      this.sr = v
-    of 13:
-      if v != 0:
-        raise newException(Exception, "Unhandle write to CAUSE register")
-    of 3, 5, 6, 7, 9, 11:
-      if v != 0:
-        raise newException(Exception, "Unhandle write to coprocessor register")
+      case cop_r:
+        of 12:
+          v = this.sr
+        of 13:
+          raise newException(Exception, "Unhandled load from CAUSE register")
+        else:
+          raise newException(Exception, fmt"Unknown coprocessor register : {cop_r}")
+
+      this.load = (cpu_r, v)
+
+    of 0b00100: # MTC0 (store to cop0 reg)
+      let v = this.regs[cpu_r]
+
+      case cop_r:
+        of 12:
+          this.sr = v
+        of 13:
+          if v != 0:
+            raise newException(Exception, "Unhandled write to CAUSE register")
+        of 3, 5, 6, 7, 9, 11:
+          if v != 0:
+            raise newException(Exception, "Unhandled write to coprocessor register")
+        else:
+          raise newException(Exception, fmt"Unknown coprocessor register : {cop_r}")
     else:
-      raise newException(Exception, fmt"Unknown coprocessor register : {cop_r}")
+      raise newException(Exception, "Unhandled cop0 instruction")
 
 proc instrBne(this: var Cpu, instruction: uint32) =
   let i = instruction.immSe
