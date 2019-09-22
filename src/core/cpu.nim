@@ -100,7 +100,7 @@ proc instrOri(this: var Cpu, instruction: uint32) =
 
 proc instrSw(this: var Cpu, instruction: uint32) =
   if (this.sr and 0x10000) != 0:
-    notice("Ignoring store when cache is isolated")
+    # notice("Ignoring store when cache is isolated")
     return
 
   let i = instruction.immSe
@@ -122,7 +122,6 @@ proc instrSll(this: var Cpu, instruction: uint32) =
   this.setReg(d, v)
 
 proc instrZero(this: var Cpu, instruction: uint32) =
-  info(fmt"Decoding sub {instruction:#x}")
   let subFunction = instruction.subfunction.int
 
   if not this.subInstructionsTable.contains(subfunction):
@@ -192,7 +191,7 @@ proc instrAddi(this: var Cpu, instruction: uint32) =
 
 proc instrLw(this: var Cpu, instruction: uint32) =
   if (this.sr and 0x10000) != 0:
-     notice("Ignoring store when cache is isolated")
+     # notice("Ignoring store when cache is isolated")
      return
     
   let i = instruction.immSe
@@ -228,7 +227,7 @@ proc instrAddu(this: var Cpu, instruction: uint32) =
 
 proc instrSh(this: var Cpu, instruction: uint32) =
   if (this.sr and 0x10000) != 0:
-     notice("Ignoring store when cache is isolated")
+     # notice("Ignoring store when cache is isolated")
      return
     
   let i = instruction.immSe
@@ -258,7 +257,7 @@ proc instrAndi(this: var Cpu, instruction: uint32) =
 
 proc instrSb(this: var Cpu, instruction: uint32) =
   if (this.sr and 0x10000) != 0:
-     notice("Ignoring store when cache is isolated")
+     # notice("Ignoring store when cache is isolated")
      return
 
   let i = instruction.immSe
@@ -269,6 +268,11 @@ proc instrSb(this: var Cpu, instruction: uint32) =
   let v = this.regs[t].uint8
 
   this.interco.store8(address, v)
+
+proc instrJr(this: var Cpu, instruction: uint32) =
+  let s = instruction.s
+
+  this.nextPc = this.regs[s]
 # End of instruction
 
 proc init*(this: var Cpu, interco: Interconnect) =
@@ -297,18 +301,18 @@ proc init*(this: var Cpu, interco: Interconnect) =
     OPCODE_SH: instrSh,
     OPCODE_JAL: instrJal,
     OPCODE_ANDI: instrAndi,
-    OPCODE_SB: instrSb
+    OPCODE_SB: instrSb,
   }.toTable
 
   this.subInstructionsTable = {
     SUBFUNCTION_SLL: instrSll,
     SUBFUNCTION_OR: instrOr,
     SUBFUNCTION_SLTU: instrSltu,
-    SUBFUNCTION_ADDU: instrAddu
+    SUBFUNCTION_ADDU: instrAddu,
+    SUBFUNCTION_JR: instrJr
    }.toTable
 
 proc decodeAndExecute(this: var Cpu, instruction: uint32) =
-  info(fmt"Decoding {instruction:#x} @{this.pc - 2 * WORD_SIZE:#x}")
   let opcode = instruction.op.int
 
   if not this.instructionsTable.contains(opcode):
