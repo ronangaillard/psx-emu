@@ -14,6 +14,14 @@ const RAM_SIZE* = 2 * 1024 * 1024
 const SPU_REGISTER_SIZE* = 640
 const SPU_REGISTER_ADDR* = 0x1f801c00.uint32
 
+const LTQ_MC_DDR_BASE_1*: uint32 = 0x1f801000
+const LTQ_MC_DDR_BASE_1_VALUE*: uint32 = 0x1f000000
+const LTQ_MC_DDR_BASE_2*: uint32 = 0x1f801004
+const LTQ_MC_DDR_BASE_2_VALUE*: uint32 = 0x1f802000
+
+const EXPANSION2_ADDRESS* = 0x1f802000.uint32
+const EXPANSION2_SIZE* = 66
+
 const WORD_SIZE* = 4
 
 type

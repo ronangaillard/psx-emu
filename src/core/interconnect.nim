@@ -1,11 +1,6 @@
 import memoryzone
 import strformat
 
-const LTQ_MC_DDR_BASE_1*: uint32 = 0x1f801000
-const LTQ_MC_DDR_BASE_1_VALUE*: uint32 = 0x1f000000
-const LTQ_MC_DDR_BASE_2*: uint32 = 0x1f801004
-const LTQ_MC_DDR_BASE_2_VALUE*: uint32 = 0x1f802000
-
 const REGION_MASK: array[8, uint32] = [
   # KUSEG: 2048MB
   0xffffffff.uint32, 0xffffffff.uint32, 0xffffffff.uint32, 0xffffffff.uint32,
@@ -70,6 +65,9 @@ proc store16*(this: Interconnect, address:uint32, value:uint16) =
       return
 
   raise newException(UnallocatedAddress, fmt"Address {address:#x} is unallocated") 
+
+proc store8*(this: Interconnect, address:uint32, value:uint8) =
+  discard # Ignore it, must be for debugging
 
 proc printState*(this: Interconnect) =
   for mz in this.memoryZones:
