@@ -76,7 +76,14 @@ proc store16*(this: Interconnect, address:uint32, value:uint16) =
   raise newException(UnallocatedAddress, fmt"Address {address:#x} is unallocated") 
 
 proc store8*(this: Interconnect, address:uint32, value:uint8) =
-  discard # Ignore it, must be for debugging
+  let maskedAddress = maskCpuAddress(address)
+
+  for mz in this.memoryZones:
+    if mz.provides(maskedAddress):
+      mz.store8(maskedAddress, value)
+      return
+
+  raise newException(UnallocatedAddress, fmt"Address {address:#x} is unallocated") 
 
 proc printState*(this: Interconnect) =
   for mz in this.memoryZones:

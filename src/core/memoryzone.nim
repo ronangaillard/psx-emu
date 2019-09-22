@@ -106,5 +106,15 @@ proc store16*(this: MemoryZone, address: uint32, value: uint16) =
     
   # TODO
 
+proc store8*(this: MemoryZone, address: uint32, value: uint8) =
+  if this.mode == MemoryAccessMode.readOnly:
+    raise newException(Exception, "Trying to write to read only memory")
+  if this.mode == MemoryAccessMode.noChange and this.load32(address) != value:
+    raise newException(Exception, "Trying to change value to \"no change\" memory")
+    
+  let offset = address - this.startAddr
+
+  this.data[offset] = value
+
 proc printState*(this: MemoryZone) =
   info(fmt"MemoryZone [{this.startAddr:#x}, {(this.startAddr + this.data.len.uint32):#x}] mode : {this.mode}")
