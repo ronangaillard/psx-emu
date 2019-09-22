@@ -2,13 +2,13 @@ import streams
 import logging
 import strformat
 
-const BIOS_START_ADDR* = 0xbfc00000.uint32
+const BIOS_START_ADDR* = 0x1fc00000.uint32
 const BIOS_SIZE* = 512 * 1024
 
 const RAM_SIZE_REG_ADDR* = 0x1f801060.uint32
 const CACHE_CONTROL_ADDR* = 0xfffe0130.uint32
 
-const RAM_START_ADDR* = 0xa0000000.uint32
+const RAM_START_ADDR* = 0x00000000.uint32
 const RAM_SIZE* = 2 * 1024 * 1024
 
 const WORD_SIZE* = 4
