@@ -11,6 +11,9 @@ const CACHE_CONTROL_ADDR* = 0xfffe0130.uint32
 const RAM_START_ADDR* = 0x00000000.uint32
 const RAM_SIZE* = 2 * 1024 * 1024
 
+const SPU_REGISTER_SIZE* = 640
+const SPU_REGISTER_ADDR* = 0x1f801c00.uint32
+
 const WORD_SIZE* = 4
 
 type

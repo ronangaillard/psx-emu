@@ -59,7 +59,7 @@ proc store32*(this: Interconnect, address: uint32, value:uint32) =
   raise newException(UnallocatedAddress, fmt"Address {address:#x} is unallocated") 
 
 proc store16*(this: Interconnect, address:uint32, value:uint16) =
-  if address mod 4 != 0:
+  if address mod 2 != 0:
     raise newException(UnalignedMemoryAccess, "Unaligned memory access is not allowed")
     
   let maskedAddress = maskCpuAddress(address)

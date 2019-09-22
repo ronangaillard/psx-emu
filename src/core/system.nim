@@ -35,6 +35,12 @@ proc init*(this: var System) =
   cacheControl.setStartAddr(CACHE_CONTROL_ADDR)
   cacheControl.setMode(readWrite)
 
+  # Sound
+  var spu = new(MemoryZone)
+  spu.initEmpty(SPU_REGISTER_SIZE)
+  spu.setStartAddr(SPU_REGISTER_ADDR)
+  spu.setMode(readWrite)
+
   var ram = new(MemoryZone)
   ram.initEmpty(RAM_SIZE)
   ram.setStartAddr(RAM_START_ADDR)
@@ -47,6 +53,7 @@ proc init*(this: var System) =
   this.psxInterconnect.addZone(ramSizeRegister)
   this.psxInterconnect.addZone(cacheControl)
   this.psxInterconnect.addZone(ram)
+  this.psxInterconnect.addZone(spu)
   info("System ready")
 
   this.psxCpu.init(this.psxInterconnect)
