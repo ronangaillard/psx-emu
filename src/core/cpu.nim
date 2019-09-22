@@ -246,6 +246,15 @@ proc instrJal(this: var Cpu, instruction: uint32) =
   this.setReg(31, ra)
 
   this.instrJ(instruction)
+
+proc instrAndi(this: var Cpu, instruction: uint32) =
+  let i = instruction.imm
+  let t = instruction.t
+  let s = instruction.s
+
+  let v = this.regs[s] and i
+
+  this.setReg(t, v)
 # End of instruction
 
 proc init*(this: var Cpu, interco: Interconnect) =
@@ -272,7 +281,8 @@ proc init*(this: var Cpu, interco: Interconnect) =
     OPCODE_ADDI: instrAddi,
     OPCODE_LW: instrLw,
     OPCODE_SH: instrSh,
-    OPCODE_JAL: instrJal
+    OPCODE_JAL: instrJal,
+    OPCODE_ANDI: instrAndi
   }.toTable
 
   this.subInstructionsTable = {
