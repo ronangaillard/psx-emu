@@ -73,6 +73,11 @@ proc load32*(this: MemoryZone, address: uint32): uint32 =
 
   return b0 or ( b1 shl 8 ) or ( b2 shl 16 ) or (b3 shl 24)
 
+proc load8*(this: MemoryZone, address: uint32): uint8 =
+  let offset = address - this.startAddr
+
+  return this.data[offset]
+
 proc store32*(this: MemoryZone, address: uint32, value: uint32) =
   if this.mode == MemoryAccessMode.readOnly:
     raise newException(Exception, "Trying to write to read only memory")
