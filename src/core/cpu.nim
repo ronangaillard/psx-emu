@@ -204,6 +204,18 @@ proc instrLw(this: var Cpu, instruction: uint32) =
 
   this.load = (t, v)
 
+proc instrSltu(this: var Cpu, instruction: uint32) =
+  let d = instruction.d
+  let s = instruction.s
+  let t = instruction.t
+
+  var v: uint32
+  if this.regs[s] < this.regs[t]:
+    v = 1
+  else:
+    v = 0
+
+  this.setReg(d, v)
 # End of instruction
 
 proc init*(this: var Cpu, interco: Interconnect) =
@@ -233,7 +245,8 @@ proc init*(this: var Cpu, interco: Interconnect) =
 
   this.subInstructionsTable = {
     SUBFUNCTION_SLL: instrSll,
-    SUBFUNCTION_OR: instrOr
+    SUBFUNCTION_OR: instrOr,
+    SUBFUNCTION_SLTU: instrSltu
    }.toTable
 
 proc decodeAndExecute(this: var Cpu, instruction: uint32) =
