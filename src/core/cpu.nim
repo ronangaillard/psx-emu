@@ -311,13 +311,23 @@ proc instrBeq(this: var Cpu, instruction: uint32) =
     this.branch(i)
 
 proc instrAnd(this: var Cpu, instruction: uint32) =
-    let d = instruction.d
-    let s = instruction.s
-    let t = instruction.t
+  let d = instruction.d
+  let s = instruction.s
+  let t = instruction.t
 
-    let v = this.regs[s] and this.regs[t]
+  let v = this.regs[s] and this.regs[t]
 
-    this.setReg(d, v)
+  this.setReg(d, v)
+
+proc instrAdd(this: var Cpu, instruction: uint32) =
+  let s = this.regs[instruction.s]
+  let t = this.regs[instruction.t]
+  let d = instruction.d
+
+  # TODO : maybe I should handle overflow ?
+  let v = s + t
+
+  this.setReg(d, v)
 # End of instruction
 
 proc init*(this: var Cpu, interco: Interconnect) =
@@ -357,7 +367,8 @@ proc init*(this: var Cpu, interco: Interconnect) =
     SUBFUNCTION_SLTU: instrSltu,
     SUBFUNCTION_ADDU: instrAddu,
     SUBFUNCTION_JR: instrJr,
-    SUBFUNCTION_AND: instrAnd
+    SUBFUNCTION_AND: instrAnd,
+    SUBFUNCTION_ADD: instrAdd
    }.toTable
 
 proc decodeAndExecute(this: var Cpu, instruction: uint32) =
