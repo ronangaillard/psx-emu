@@ -58,6 +58,19 @@ proc store32*(this: Interconnect, address: uint32, value:uint32) =
 
   raise newException(UnallocatedAddress, fmt"Address {address:#x} is unallocated") 
 
+proc store16*(this: Interconnect, address:uint32, value:uint16) =
+  if address mod 4 != 0:
+    raise newException(UnalignedMemoryAccess, "Unaligned memory access is not allowed")
+    
+  let maskedAddress = maskCpuAddress(address)
+
+  for mz in this.memoryZones:
+    if mz.provides(maskedAddress):
+      mz.store16(maskedAddress, value)
+      return
+
+  raise newException(UnallocatedAddress, fmt"Address {address:#x} is unallocated") 
+
 proc printState*(this: Interconnect) =
   for mz in this.memoryZones:
     mz.printState()

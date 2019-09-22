@@ -225,6 +225,20 @@ proc instrAddu(this: var Cpu, instruction: uint32) =
   let v = this.regs[s] + this.regs[t]
 
   this.setReg(d, v)
+
+proc instrSh(this: var Cpu, instruction: uint32) =
+  if (this.sr and 0x10000) != 0:
+     notice("Ignoring store when cache is isolated")
+     return
+    
+  let i = instruction.immSe
+  let t = instruction.t
+  let s = instruction.s
+
+  let address = this.regs[s] + i
+  let v = this.regs[t].uint16
+
+  this.interco.store16(address, v)
 # End of instruction
 
 proc init*(this: var Cpu, interco: Interconnect) =
@@ -249,7 +263,8 @@ proc init*(this: var Cpu, interco: Interconnect) =
     OPCODE_COP0: instrCop0,
     OPCODE_BNE: instrBne,
     OPCODE_ADDI: instrAddi,
-    OPCODE_LW: instrLw
+    OPCODE_LW: instrLw,
+    OPCODE_SH: instrSh
   }.toTable
 
   this.subInstructionsTable = {
