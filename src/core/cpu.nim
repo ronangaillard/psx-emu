@@ -284,6 +284,14 @@ proc instrLb(this: var Cpu, instruction: uint32) =
   let v = this.interco.load8(address)
 
   this.load = (t.uint8, v.uint32)
+
+proc instrBeq(this: var Cpu, instruction: uint32) =
+  let i = instruction.immSe
+  let s = instruction.s
+  let t = instruction.t
+
+  if this.regs[s] == this.regs[t]:
+    this.branch(i)
 # End of instruction
 
 proc init*(this: var Cpu, interco: Interconnect) =
@@ -313,7 +321,8 @@ proc init*(this: var Cpu, interco: Interconnect) =
     OPCODE_JAL: instrJal,
     OPCODE_ANDI: instrAndi,
     OPCODE_SB: instrSb,
-    OPCODE_LB: instrLb
+    OPCODE_LB: instrLb,
+    OPCODE_BEQ: instrBeq
   }.toTable
 
   this.subInstructionsTable = {
