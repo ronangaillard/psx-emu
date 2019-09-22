@@ -21,7 +21,7 @@ proc d(instruction: uint32): uint8 = ((instruction shr 11) and 0x1f).uint8
 ## Get h
 proc h(instruction: uint32): uint8 = ((instruction shr 6) and 0x1f).uint8
 ## Get subfunction (bit [5:0]
-proc subfunction(instruction: uint32): uint8 = (instruction and 0x1f).uint8
+proc subfunction(instruction: uint32): uint8 = (instruction and 0x3f).uint8
 ## Get immediate value
 proc imm(instruction: uint32): uint16 = (instruction and 0xffff).uint16
 ## Get immediate value signed extended
