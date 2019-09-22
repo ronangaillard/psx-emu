@@ -309,6 +309,15 @@ proc instrBeq(this: var Cpu, instruction: uint32) =
 
   if this.regs[s] == this.regs[t]:
     this.branch(i)
+
+proc instrAnd(this: var Cpu, instruction: uint32) =
+    let d = instruction.d
+    let s = instruction.s
+    let t = instruction.t
+
+    let v = this.regs[s] and this.regs[t]
+
+    this.setReg(d, v)
 # End of instruction
 
 proc init*(this: var Cpu, interco: Interconnect) =
@@ -347,7 +356,8 @@ proc init*(this: var Cpu, interco: Interconnect) =
     SUBFUNCTION_OR: instrOr,
     SUBFUNCTION_SLTU: instrSltu,
     SUBFUNCTION_ADDU: instrAddu,
-    SUBFUNCTION_JR: instrJr
+    SUBFUNCTION_JR: instrJr,
+    SUBFUNCTION_AND: instrAnd
    }.toTable
 
 proc decodeAndExecute(this: var Cpu, instruction: uint32) =
