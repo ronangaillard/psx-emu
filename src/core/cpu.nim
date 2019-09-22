@@ -41,6 +41,13 @@ type
     lo: uint32 
     # General purpose registers
     regs: array[32, uint32]
+    # General purpose regs array used to emulate
+    # the load delay slot in MIPS processors
+    # They hold the output of the current instruction
+    loadDelayRegs: array[32, uint32]
+    # Load initiated by current instruction (reg index, value)
+    load: (uint8, uint32)
+
 
     # Coprocessor registers
     sr: uint32
@@ -59,7 +66,7 @@ proc setReg(this: var Cpu, regIndex: uint8, value: uint32) =
   if regIndex == 0:
     return
 
-  this.regs[regIndex] = value
+  this.loadDelayRegs[regIndex] = value
 
 proc printState*(this: Cpu) = 
   var cpuState = "CPU State:\n"
@@ -159,7 +166,7 @@ proc instrBne(this: var Cpu, instruction: uint32) =
   if this.regs[s] != this.regs[t]:
     this.branch(i)
 
-proc instrAdd(this: var Cpu, instruction: uint32) =
+proc instrAddi(this: var Cpu, instruction: uint32) =
   let i = instruction.immSe
   let t = instruction.t
   let s = this.regs[instruction.s]
@@ -171,6 +178,21 @@ proc instrAdd(this: var Cpu, instruction: uint32) =
     raise newException(Exception, "Overflow in ADD")
 
   this.setReg(t, v)
+
+proc instrLw(this: var Cpu, instruction: uint32) =
+  if (this.sr and 0x10000) != 0:
+     notice("Ignoring store when cache is isolated")
+     return
+    
+  let i = instruction.immSe
+  let t = instruction.t
+  let s = instruction.s
+  let address = this.regs[s] + i
+
+  let v = this.interco.load32(address)
+
+  this.load = (t, v)
+
 # End of instruction
 
 proc init*(this: var Cpu, interco: Interconnect) =
@@ -178,6 +200,7 @@ proc init*(this: var Cpu, interco: Interconnect) =
   this.pc = BIOS_START_ADDR # boot adress
   this.nextInstruction = 0x00.uint32
   this.sr = 0
+  this.load = (0.uint8, 0.uint32)
 
   # Fill regs with garbage data
   for i in 1 .. <32:
@@ -193,7 +216,9 @@ proc init*(this: var Cpu, interco: Interconnect) =
     OPCODE_ADDIU: instrAddiu,
     OPCODE_J: instrJ,
     OPCODE_COP0: instrCop0,
-    OPCODE_BNE: instrBne
+    OPCODE_BNE: instrBne,
+    OPCODE_ADDI: instrAddi,
+    OPCODE_LW: instrLw
   }.toTable
 
   this.subInstructionsTable = {
@@ -217,6 +242,13 @@ proc runNextInstr*(this: var Cpu) =
 
   this.pc = this.pc + WORD_SIZE
 
+  # Execute the pending load
+  let (reg, value) = this.load
+  this.setReg(reg.uint8, value)
+
+  # Reset the load
+  this.load = (0.uint8 ,0.uint32)
+
   this.decodeAndExecute(instruction)
 
-
+  this.regs = this.loadDelayRegs
