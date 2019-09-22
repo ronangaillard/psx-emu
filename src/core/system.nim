@@ -46,6 +46,12 @@ proc init*(this: var System) =
   ram.setStartAddr(RAM_START_ADDR)
   ram.setMode(readWrite)
 
+  # Expansion port
+  var expansion1 = new(MemoryZone)
+  expansion1.setStartAddr(EXPANSION1_ADDRESS)
+  expansion1.fromMemory8([0xff.uint8])
+  expansion1.setMode(readOnly)
+
   # For hardware debugging
   var expansion2 = new(MemoryZone)
   expansion2.initEmpty(EXPANSION2_SIZE)
@@ -60,6 +66,7 @@ proc init*(this: var System) =
   this.psxInterconnect.addZone(cacheControl)
   this.psxInterconnect.addZone(ram)
   this.psxInterconnect.addZone(spu)
+  this.psxInterconnect.addZone(expansion1)
   this.psxInterconnect.addZone(expansion2)
   info("System ready")
 

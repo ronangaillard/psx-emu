@@ -19,6 +19,9 @@ const LTQ_MC_DDR_BASE_1_VALUE*: uint32 = 0x1f000000
 const LTQ_MC_DDR_BASE_2*: uint32 = 0x1f801004
 const LTQ_MC_DDR_BASE_2_VALUE*: uint32 = 0x1f802000
 
+const EXPANSION1_ADDRESS* = 0x1f000084
+const EXPANSION1_SIZE* = 1
+
 const EXPANSION2_ADDRESS* = 0x1f802000.uint32
 const EXPANSION2_SIZE* = 66
 
@@ -50,6 +53,10 @@ proc fromMemory32*(this: var MemoryZone, data: openArray[uint32]) =
     this.data.add((data32 shr 8 and 0xff).uint8)
     this.data.add((data32 shr 16 and 0xff).uint8)
     this.data.add((data32 shr 24 and 0xff).uint8)
+
+proc fromMemory8*(this: var MemoryZone, data: openArray[uint8]) =
+  for i in data:
+    this.data.add(i)
 
 proc initEmpty*(this: var MemoryZone, size: uint32) =
   this.data = newSeq[uint8](size)
