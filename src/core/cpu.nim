@@ -4,6 +4,7 @@ import logging
 import opcodes
 import tables
 import memoryzone
+import terminal
 
 type UnknownOpcode = Exception
 type UnknownRegister = Exception
@@ -36,6 +37,7 @@ type
     interco: Interconnect
     generalRegs: array[32, uint32]
     pc: uint32
+    nextPc: uint32
     ir: uint32
     hi: uint32
     lo: uint32 
@@ -56,7 +58,10 @@ type
 
     # This is used for instructions with opcode = 0
     subInstructionsTable: Table[int, proc(this: var Cpu, instruction: uint32) {.nimcall.}]
-    nextInstruction: uint32
+
+proc setPc(this: var Cpu, pc: uint32) =
+  this.pc = pc
+  this.nextPc = pc + WORD_SIZE
 
 proc setReg(this: var Cpu, regIndex: uint8, value: uint32) =
   if regIndex >= 32.uint32:
@@ -80,7 +85,7 @@ proc branch(this: var Cpu, offset: uint32) =
   # Offset is shifted left to get aligned addresses
   let offset = offset shl 2
 
-  this.pc = this.pc + offset
+  this.nextPc = this.pc + offset
 
 # Instructions
 proc instrLui(this: var Cpu, instruction: uint32) =
@@ -117,7 +122,7 @@ proc instrSll(this: var Cpu, instruction: uint32) =
   this.setReg(d, v)
 
 proc instrZero(this: var Cpu, instruction: uint32) =
-  info(fmt"Decoding sub {instruction:#b}")
+  info(fmt"Decoding sub {instruction:#x}")
   let subFunction = instruction.subfunction.int
 
   if not this.subInstructionsTable.contains(subfunction):
@@ -136,7 +141,7 @@ proc instrAddiu(this: var Cpu, instruction: uint32) =
 
 proc instrJ(this: var Cpu, instruction: uint32) =
   let i = instruction.immJump
-  this.pc = (this.pc and 0xf0000000.uint32) or (i shl 2)
+  this.nextPc = (this.pc and 0xf0000000.uint32) or (i shl 2)
 
 proc instrOr(this: var Cpu, instruction: uint32) =
   let d = instruction.d
@@ -197,8 +202,7 @@ proc instrLw(this: var Cpu, instruction: uint32) =
 
 proc init*(this: var Cpu, interco: Interconnect) =
   this.interco = interco
-  this.pc = BIOS_START_ADDR # boot adress
-  this.nextInstruction = 0x00.uint32
+  this.setPc(BIOS_START_ADDR)
   this.sr = 0
   this.load = (0.uint8, 0.uint32)
 
@@ -227,7 +231,7 @@ proc init*(this: var Cpu, interco: Interconnect) =
    }.toTable
 
 proc decodeAndExecute(this: var Cpu, instruction: uint32) =
-  info(fmt"Decoding {instruction:#b} @{this.pc - 2 * WORD_SIZE:#x}")
+  info(fmt"Decoding {instruction:#x} @{this.pc - 2 * WORD_SIZE:#x}")
   let opcode = instruction.op.int
 
   if not this.instructionsTable.contains(opcode):
@@ -236,11 +240,10 @@ proc decodeAndExecute(this: var Cpu, instruction: uint32) =
   this.instructionsTable[opcode](this, instruction)
 
 proc runNextInstr*(this: var Cpu) =
-  let instruction: uint32 = this.nextInstruction
-  
-  this.nextInstruction = this.interco.load32(this.pc)
+  let instruction: uint32 = this.interco.load32(this.pc)
 
-  this.pc = this.pc + WORD_SIZE
+  this.pc = this.nextPc
+  this.nextPc = this.pc + WORD_SIZE
 
   # Execute the pending load
   let (reg, value) = this.load
