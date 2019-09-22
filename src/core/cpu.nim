@@ -160,8 +160,14 @@ proc instrCop0(this: var Cpu, instruction: uint32) =
   case cop_r:
     of 12:
       this.sr = v
+    of 13:
+      if v != 0:
+        raise newException(Exception, "Unhandle write to CAUSE register")
+    of 3, 5, 6, 7, 9, 11:
+      if v != 0:
+        raise newException(Exception, "Unhandle write to coprocessor register")
     else:
-      raise newException(Exception, "Unknown coprocessor register")
+      raise newException(Exception, fmt"Unknown coprocessor register : {cop_r}")
 
 proc instrBne(this: var Cpu, instruction: uint32) =
   let i = instruction.immSe
