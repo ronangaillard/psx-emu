@@ -328,6 +328,26 @@ proc instrAdd(this: var Cpu, instruction: uint32) =
   let v = s + t
 
   this.setReg(d, v)
+
+proc instrBgtz(this: var Cpu, instruction: uint32) =
+  let i = instruction.immSe
+  let s = instruction.s
+
+  let v = cast[int32](this.regs[s])
+
+  if v > 0:
+    this.branch(i)
+
+
+proc instrBlez(this: var Cpu, instruction: uint32) =
+  let i = instruction.immSe
+  let s = instruction.s
+
+  let v = cast[int32](this.regs[s])
+
+  if v <= 0:
+    this.branch(i)
+
 # End of instruction
 
 proc init*(this: var Cpu, interco: Interconnect) =
@@ -358,7 +378,9 @@ proc init*(this: var Cpu, interco: Interconnect) =
     OPCODE_ANDI: instrAndi,
     OPCODE_SB: instrSb,
     OPCODE_LB: instrLb,
-    OPCODE_BEQ: instrBeq
+    OPCODE_BEQ: instrBeq,
+    OPCODE_BGTZ: instrBgtz,
+    OPCODE_BLEZ: instrBlez
   }.toTable
 
   this.subInstructionsTable = {
